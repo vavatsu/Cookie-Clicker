@@ -1,0 +1,173 @@
+import pygame
+import json
+import sys
+
+pygame.init()
+
+# Création de la fenêtre
+screen = pygame.display.set_mode((1200, 600), pygame.RESIZABLE)
+pygame.display.set_caption("Cookie Clicker")
+
+# Charger les images
+image_cookie = pygame.image.load("image cookie.png")  # Cookie
+image_cookie_rect = image_cookie.get_rect(topleft=(150, 150))
+
+image_autoclick1 = pygame.image.load("Autoclick 1.png")  # Autoclick 1
+image_autoclick1_rect = image_autoclick1.get_rect(topleft=(740, 170))
+image_autoclick2 = pygame.image.load("Autoclick 2.png")  # Autoclick 2
+image_autoclick2_rect = image_autoclick2.get_rect(topleft=(740, 250))
+image_autoclick3 = pygame.image.load("Autoclick 3.png")  # Autoclick 3
+image_autoclick3_rect = image_autoclick3.get_rect(topleft=(740, 330))
+
+image_click2 = pygame.image.load("Click x2.png")  # Click x2
+image_click2_rect = image_click2.get_rect(topleft=(650, 430))
+image_click5 = pygame.image.load("Click x5.png")  # Click x5
+image_click5_rect = image_click5.get_rect(topleft=(920, 430))
+image_click20 = pygame.image.load("Click x20.png")  # Click x20
+image_click20_rect = image_click20.get_rect(topleft=(650, 510))
+image_click100 = pygame.image.load("Click x100.png")  # Click x100
+image_click100_rect = image_click100.get_rect(topleft=(920, 510))
+
+image_click2_v = pygame.image.load("Click x2 use.png")  # Click x2
+image_click2_v_rect = image_click2_v.get_rect(topleft=(650, 430))
+image_click5_v = pygame.image.load("Click x5 use.png")  # Click x5
+image_click5_v_rect = image_click5_v.get_rect(topleft=(920, 430))
+image_click20_v = pygame.image.load("Click x20 use.png")  # Click x20
+image_click20_v_rect = image_click20_v.get_rect(topleft=(650, 510))
+image_click100_v = pygame.image.load("Click x100 use.png")  # Click x100
+image_click100_v_rect = image_click100_v.get_rect(topleft=(920, 510))
+
+
+# Déclaration des valeurs
+cookie = 100000
+autoclick1 = 0
+autoclick2 = 0
+autoclick3 = 0
+prix_autoclick1 = 20
+prix_autoclick2 = 400
+prix_autoclick3 = 10000
+cookie_s = 0
+click = 1
+x2 = True
+x5 = True
+x20 = True
+x100 = True
+
+
+# Boucle principale
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:  # Fermer la fenêtre
+            running = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if image_cookie_rect.collidepoint(event.pos):  # +1 si click sur le cookie
+                cookie += click
+
+            if image_autoclick1_rect.collidepoint(event.pos) and cookie >= prix_autoclick1:  # +1 si click sur autoclick 1
+                autoclick1 += 1
+                cookie -= int(prix_autoclick1)
+                prix_autoclick1 = prix_autoclick1 * 1.2
+            if image_autoclick2_rect.collidepoint(event.pos) and cookie >= prix_autoclick2:  # +1 si click sur autoclick 2
+                autoclick2 += 1
+                cookie -= int(prix_autoclick2)
+                prix_autoclick2 = prix_autoclick2 * 1.3
+            if image_autoclick3_rect.collidepoint(event.pos) and cookie >= prix_autoclick3:  # +1 si click sur autoclick 3
+                autoclick3 += 1
+                cookie -= int(prix_autoclick3)
+                prix_autoclick3 = prix_autoclick3 * 1.4
+
+            if image_click2_rect.collidepoint(event.pos) and cookie >= 250 and x2 == True:  # Click x2
+                click = 2
+                cookie -= 250
+                x2 = False
+            if image_click5_rect.collidepoint(event.pos) and cookie >= 1800 and x5 == True:  # Click x5
+                click = 5
+                cookie -= 1800
+                x5 = False
+            if image_click20_rect.collidepoint(event.pos) and cookie >= 3200 and x20 == True:  # Click x20
+                click = 20
+                cookie -= 3200
+                x20 = False
+            if image_click100_rect.collidepoint(event.pos) and cookie >= 6800 and x100 == True:  # Click x100
+                click = 100
+                cookie -= 6800
+                x100 = False
+
+
+        # Timer toutes les 1/100 secondes
+        ADDVALUE = pygame.USEREVENT + 1
+        pygame.time.set_timer(ADDVALUE, 9)
+
+        if autoclick1 > 0:
+            if event.type == ADDVALUE:
+                cookie += autoclick1 / 100 + autoclick2 / 10 + autoclick3  # Ajouter 'autoclick' toutes les secondes
+                cookie_s = autoclick1 + autoclick2 * 10 + autoclick3 * 100  # Calcule le nombre de cookies par secondes
+
+
+    screen.fill((255, 255, 255))  # Remplie la fenêtre de blanc
+    screen.blit(image_cookie, image_cookie_rect)  # Dessiner le cookie
+
+    screen.blit(pygame.font.Font(None, 43).render(f"Cookies = {round(cookie)}", True, (0, 0, 0)), (250, 60))  # Affiche le nombres de cookies
+    screen.blit(pygame.font.Font(None, 30).render(f"{cookie_s} cookies/s", True, (0, 0, 0)), (250, 100))  # Affiche le nombres de cookies/s
+
+    if cookie >= prix_autoclick1:
+        screen.blit(image_autoclick1, image_autoclick1_rect)  # Dessiner l'autoclick 1
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick1}    prix: {int(prix_autoclick1)}", True, (0, 169, 0)), (925, 181))  # Affiche le level + prix de l'autoclick 1
+    else:
+        screen.blit(image_autoclick1, image_autoclick1_rect)  # Dessiner l'autoclick 1
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick1}    prix: {int(prix_autoclick1)}", True, (0, 0, 0)), (925, 181))  # Affiche le level + prix de l'autoclick 1
+    if cookie >= prix_autoclick2:
+        screen.blit(image_autoclick2, image_autoclick2_rect)  # Dessiner l'autoclick 2
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick2}    prix: {int(prix_autoclick2)}", True, (0, 169, 0)), (925, 261))  # Affiche le level + prix de l'autoclick 2
+    else:
+        screen.blit(image_autoclick2, image_autoclick2_rect)  # Dessiner l'autoclick 2
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick2}    prix: {int(prix_autoclick2)}", True, (0, 0, 0)), (925, 261))  # Affiche le level + prix de l'autoclick 2
+    if cookie >= prix_autoclick3:
+        screen.blit(image_autoclick3, image_autoclick3_rect)  # Dessiner l'autoclick 3
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick3}    prix: {int(prix_autoclick3)}", True, (0, 169, 0)), (925, 341))  # Affiche le level + prix de l'autoclick 3
+    else:
+        screen.blit(image_autoclick3, image_autoclick3_rect)  # Dessiner l'autoclick 3
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick3}    prix: {int(prix_autoclick3)}", True, (0, 0, 0)), (925, 341))  # Affiche le level + prix de l'autoclick 3
+
+
+    if x2 == True:  # Dessiner Click x2
+        screen.blit(image_click2, image_click2_rect)
+        if cookie >= 250:
+            screen.blit(pygame.font.Font(None, 30).render("prix: 250", True, (0, 169, 0)), (785, 441))
+        else:
+            screen.blit(pygame.font.Font(None, 30).render("prix: 250", True, (0, 0, 0)), (785, 441))
+    else:
+        screen.blit(image_click2_v, image_click2_v_rect)
+    if x5 == True:  # Dessiner Click x5
+        screen.blit(image_click5, image_click5_rect)
+        if cookie >= 1800:
+            screen.blit(pygame.font.Font(None, 30).render("prix: 1800", True, (0, 169, 0)), (1055, 441))
+        else:
+            screen.blit(pygame.font.Font(None, 30).render("prix: 1800", True, (0, 0, 0)), (1055, 441))
+    else:
+        screen.blit(image_click5_v, image_click5_v_rect)
+    if x20 == True:  # Dessiner Click x20
+        screen.blit(image_click20, image_click20_rect)
+        if cookie >= 3200:
+            screen.blit(pygame.font.Font(None, 30).render("prix: 3200", True, (0, 169, 0)), (785, 521))
+        else:
+            screen.blit(pygame.font.Font(None, 30).render("prix: 3200", True, (0, 0, 0)), (785, 521))
+    else:
+        screen.blit(image_click20_v, image_click20_v_rect)
+    if x100 == True:  # Dessiner Click x100
+        screen.blit(image_click100, image_click100_rect)
+        if cookie >= 6800:
+            screen.blit(pygame.font.Font(None, 30).render("prix: 6800", True, (0, 169, 0)), (1055, 521))
+        else:
+            screen.blit(pygame.font.Font(None, 30).render("prix: 6800", True, (0, 0, 0)), (1055, 521))
+    else:
+        screen.blit(image_click100_v, image_click100_v_rect)
+
+
+    pygame.display.flip()  # Rafraichie la fenêtre
+
+
+pygame.quit()
+sys.exit()
