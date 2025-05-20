@@ -6,7 +6,7 @@ import os
 pygame.init()
 
 pygame.mixer.music.load("sounds/music.ogg")
-pygame.mixer.music.set_volume(0.16)
+pygame.mixer.music.set_volume(0.15)
 pygame.mixer.music.play(loops = -1)  # -1 = en boucle infinie
 
 click_sound = pygame.mixer.Sound("sounds/click.wav")  # pour clic cookie
@@ -64,6 +64,17 @@ image_home = pygame.image.load("images/button.png")  # Home
 image_home_rect = image_home.get_rect(topleft=(985, 50))
 image_c_page = pygame.image.load("images/cookie.png")  # The other page
 image_c_page_rect = image_c_page.get_rect(topleft=(920, 50))
+image_h = pygame.image.load("images/home.png")  # Page des sauvegardes
+image_h_rect = image_h.get_rect(topleft=(10, 533))
+image_s = pygame.image.load("images/settings.png")  # Page des settings
+image_s_rect = image_s.get_rect(topleft=(76, 535))
+
+image_song = pygame.image.load("images/song.png")  # Logo son
+image_song_rect = image_song.get_rect(topleft=(800, 160))
+image_plus = pygame.image.load("images/plus.png")  # Logo son plus
+image_plus_rect = image_plus.get_rect(topleft=(850, 160))
+image_minus = pygame.image.load("images/moins.png")  # Logo son moins
+image_minus_rect = image_minus.get_rect(topleft=(900, 160))
 
 
 # Déclaration des valeurs
@@ -74,13 +85,16 @@ prix_x2, prix_x5, prix_x20, prix_x100 = 250, 1800, 3200, 6800
 cookie_s = 0
 click = 1
 x2, x5, x20, x100 = True, True, True, True
+affichoose = True
 home = False
 c_page = True
+settings = False
 upgrade = 1
 possible = True
 prix = 0
 floating_texts = []
 SAVE_FILE = "save.json"
+volume = 15
 
 SAVE_EVENT = pygame.USEREVENT + 2
 pygame.time.set_timer(SAVE_EVENT, 60000)  # 60000 ms = 1 minute
@@ -172,7 +186,7 @@ def format_cookie_count(n):
         return f"{n / 1_000:.2f}K"
     else:
         return str(int(n))
-    
+
 # Fonction couleur prix autoclick
 def can_afford(cookies, price, quantity, coefficient):
     for _ in range(quantity):
@@ -181,6 +195,12 @@ def can_afford(cookies, price, quantity, coefficient):
         cookies -= int(price)
         price *= coefficient
     return True
+
+def prix(prix, price, quantity, coefficient):
+    for i in range(quantity):
+        prix += price
+        price *= coefficient
+        return prix
 
 charger()
 # Boucle principale
@@ -200,12 +220,23 @@ while running:
             if image_c_page_rect.collidepoint(event.pos):
                 c_page = True
                 home = False
-                
+            if image_s_rect.collidepoint(event.pos):
+                if settings:
+                    c_page = True
+                    home = False
+                    settings = False
+                    affichoose = True
+                else:
+                    c_page = False
+                    home = False
+                    settings = True
+                    affichoose = False
+
             if image_cookie_rect.collidepoint(event.pos):  # +1 si click sur le cookie
                    cookie += click
                    click_sound.play()
                    floating_texts.append(FloatingText(f"+{click}", event.pos, (0, 0, 0), lifetime = 180))
-            
+
             if c_page:
                 if image_1_rect.collidepoint(event.pos):
                     upgrade = 1
@@ -213,7 +244,7 @@ while running:
                     upgrade = 10
                 if image_50_rect.collidepoint(event.pos):
                     upgrade = 50
-                    
+
                 if image_autoclick1_rect.collidepoint(event.pos):  # +1 si click sur autoclick 1
                     possible = True
                     temp_cookie = cookie
@@ -224,7 +255,7 @@ while running:
                         if temp_cookie >= temp_prix:
                             temp_cookie -= int(temp_prix)
                             temp_autoclick1 += 1
-                            temp_prix *= 1.2
+                            temp_prix *= 1.05
                         else:
                             possible = False
                             break
@@ -244,7 +275,7 @@ while running:
                         if temp_cookie >= temp_prix:
                             temp_cookie -= int(temp_prix)
                             temp_autoclick2 += 1
-                            temp_prix *= 1.3
+                            temp_prix *= 1.1
                         else:
                             possible = False
                             break
@@ -264,7 +295,7 @@ while running:
                         if temp_cookie >= temp_prix:
                             temp_cookie -= int(temp_prix)
                             temp_autoclick3 += 1
-                            temp_prix *= 1.4
+                            temp_prix *= 1.2
                         else:
                             possible = False
                             break
@@ -297,6 +328,19 @@ while running:
                     x100 = False
                     buy_sound.play()
 
+            if settings:
+                if image_minus_rect.collidepoint(event.pos):
+                    current_volume = pygame.mixer.music.get_volume()
+                    new_volume = min(1.0, current_volume - 0.05)
+                    pygame.mixer.music.set_volume(new_volume)
+                    volume -= 5
+
+                if image_plus_rect.collidepoint(event.pos):
+                    current_volume = pygame.mixer.music.get_volume()
+                    new_volume = min(1.0, current_volume + 0.05)
+                    pygame.mixer.music.set_volume(new_volume)
+                    volume += 5
+
 
         # Timer toutes les 1/100 secondes
         ADDVALUE = pygame.USEREVENT + 1
@@ -308,12 +352,12 @@ while running:
                 cookie_s = autoclick1 + autoclick2 * 10 + autoclick3 * 100  # Calcule le nombre de cookies par secondes
 
 
-    screen.fill((255, 255, 255))  # Fond blanc 
+    screen.fill((255, 255, 255))  # Fond blanc
     screen.blit(image_fond, image_fond_rect) # Fond cookie
 
     screen.blit(pygame.font.Font(None, 43).render(f"Cookies = {format_cookie_count(cookie)}", True, (0, 0, 0)), (210, 60))
     screen.blit(pygame.font.Font(None, 30).render(f"{cookie_s} cookies/s", True, (0, 0, 0)), (250, 100))
-    
+
     if c_page:
         # Autoclicks
         if upgrade == 1:
@@ -328,31 +372,31 @@ while running:
             draw_hover_image(image_1, image_1_rect)
             draw_hover_image(image_10, image_10_rect)
             draw_hover_image(image_50_v, image_50_rect)
-        
-        
+
+
         # AUTCLICK 1
         draw_hover_image(image_autoclick1, image_autoclick1_rect)
-        if can_afford(cookie, prix_autoclick1, upgrade, 1.2):
+        if can_afford(cookie, prix_autoclick1, upgrade, 1.05):
             color = (0, 169, 0)
         else:
             color = (255, 255, 255)
-        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick1}    prix: {int(prix_autoclick1)}", True, color), (925, 241))
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick1}    prix: {format_cookie_count(prix(0 ,prix_autoclick1, upgrade, 1.05))}", True, color), (925, 241))
 
         # AUTCLICK 2
         draw_hover_image(image_autoclick2, image_autoclick2_rect)
-        if can_afford(cookie, prix_autoclick2, upgrade, 1.3):
+        if can_afford(cookie, prix_autoclick2, upgrade, 1.1):
             color = (0, 169, 0)
         else:
             color = (255, 255, 255)
-        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick2}    prix: {int(prix_autoclick2)}", True, color), (925, 321))
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick2}    prix: {format_cookie_count(prix_autoclick2)}", True, color), (925, 321))
 
         # AUTCLICK 3
         draw_hover_image(image_autoclick3, image_autoclick3_rect)
-        if can_afford(cookie, prix_autoclick3, upgrade, 1.4):
+        if can_afford(cookie, prix_autoclick3, upgrade, 1.2):
             color = (0, 169, 0)
         else:
             color = (255, 255, 255)
-        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick3}    prix: {int(prix_autoclick3)}", True, color), (925, 401))
+        screen.blit(pygame.font.Font(None, 30).render(f"lvl {autoclick3}    prix: {format_cookie_count(prix_autoclick3)}", True, color), (925, 401))
 
     if home:
         # Click upgrades
@@ -387,21 +431,30 @@ while running:
             screen.blit(pygame.font.Font(None, 30).render(prix_txt, True, color), (960, 410))
         else:
             draw_hover_image(image_click100_v, image_click100_v_rect)
-            
+
+    if settings:
+        screen.blit(image_song, image_song_rect)
+        draw_hover_image(image_plus, image_plus_rect)
+        draw_hover_image(image_minus, image_minus_rect)
+        screen.blit(pygame.font.Font(None, 45, bold=True).render(f"{volume}%", True, (0, 0, 0)), (960, 170))
+
     draw_hover_image(image_cookie, image_cookie_rect)
-    
+
     font = pygame.font.Font(None, 30)
     for text in floating_texts[:]:
         text.update()
         text.draw(screen, font)
         if not text.is_alive():
             floating_texts.remove(text)
-            
+
     # Barre de navigation
-    pygame.draw.rect(screen, (200, 173, 127), (910, 40, 141, 68), border_radius = 15)
-    draw_hover_image(image_home, image_home_rect)
-    draw_hover_image(image_c_page, image_c_page_rect)
-    
+    if affichoose:
+        pygame.draw.rect(screen, (200, 173, 127), (910, 40, 141, 68), border_radius = 15)
+        draw_hover_image(image_home, image_home_rect)
+        draw_hover_image(image_c_page, image_c_page_rect)
+    draw_hover_image(image_s, image_s_rect)
+    draw_hover_image(image_h, image_h_rect)
+
     pygame.display.flip()
 
 pygame.quit()
